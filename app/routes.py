@@ -1,20 +1,19 @@
-from flask import render_template, redirect, url_for, flash, abort
+from flask import render_template, redirect, url_for, flash, abort, jsonify, request
 from . import app, db
-from . models import Users, deadlines, AppSettings
-from . forms import RegistrationForm, LoginForm, SettingsForm, AppSettingsForm
+from . models import Users, deadlines, AppSettings, serialize
+from . forms import RegistrationForm, LoginForm, SettingsForm
 from flask_login import login_required, login_user, current_user, logout_user
 import hashlib
-
-
 
 
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html', taskinfo=deadlines(current_user.username))
+    tags = Users.query.filter(Users.id != current_user.id).all()
+    return render_template('index.html', taskinfo=deadlines(current_user.username), tags=tags)
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login/', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -28,7 +27,7 @@ def login():
     return render_template('login.html', title='Login', form=form)
 
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/register/', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -43,7 +42,7 @@ def register():
     return render_template('register.html', title='Sign Up', form=form)
 
 
-@app.route('/settings', methods=['GET', 'POST'])
+@app.route('/settings/', methods=['GET', 'POST'])
 @login_required
 def settings():
     form = SettingsForm()
@@ -63,55 +62,35 @@ def settings():
     return render_template('settings.html', form=form, title='Settings')
 
 
-@app.route('/admin', methods=['GET', 'POST'])
+@app.route('/admin/', methods=['GET', 'POST'])
 @login_required
 def admin():
-    if current_user.is_authenticated and current_user.is_admin:
+    if current_user.is_admin:
         app_sett = AppSettings.query.get('core')
-        form = AppSettingsForm(backup_type=app_sett.backup_type)
-        if form.validate_on_submit():
-            app_sett.backup_enabled = form.backup_enabled.data
-            app_sett.backup_type = form.backup_type.data
-            app_sett.google_drive_id = form.google_drive_id.data
-            app_sett.backup_file_prefix = form.backup_file_prefix.data
-            app_sett.email_push_enabled = form.email_push_enabled.data
-            app_sett.web_push_enabled = form.web_push_enabled.data
-            app_sett.dynalist_api_url = form.dynalist_api_url.data
-            app_sett.dynalist_api_token = form.dynalist_api_token.data
-            app_sett.dynalist_api_file_id = form.dynalist_api_file_id.data
-            app_sett.smtp_host = form.smtp_host.data
-            app_sett.smtp_port = form.smtp_port.data
-            app_sett.smtp_email = form.smtp_email.data
-            app_sett.smtp_password = form.smtp_password.data
-            app_sett.secret_code = form.secret_code.data
-            app_sett.app_name = form.app_name.data
-            app_sett.old_file = form.old_file.data
-            app_sett.new_file = form.new_file.data
-            app_sett.backup_dir = form.backup_dir.data
-            db.session.commit()
-            flash('Settings applied.', 'success')
-        form.backup_enabled.data = app_sett.backup_enabled
-        form.google_drive_id.data = app_sett.google_drive_id
-        form.backup_file_prefix.data = app_sett.backup_file_prefix
-        form.email_push_enabled.data = app_sett.email_push_enabled
-        form.web_push_enabled.data = app_sett.web_push_enabled
-        form.dynalist_api_url.data = app_sett.dynalist_api_url
-        form.dynalist_api_token.data = app_sett.dynalist_api_token
-        form.dynalist_api_file_id.data = app_sett.dynalist_api_file_id
-        form.smtp_host.data = app_sett.smtp_host
-        form.smtp_port.data = app_sett.smtp_port
-        form.smtp_email.data = app_sett.smtp_email
-        form.smtp_password.data = app_sett.smtp_password
-        form.secret_code.data = app_sett.secret_code
-        form.app_name.data = app_sett.app_name
-        form.old_file.data = app_sett.old_file
-        form.new_file.data = app_sett.new_file
-        form.backup_dir.data = app_sett.backup_dir
-        return render_template('admin.html', title='Admin panel', form=form)
-    abort(404)
+        if request.method == 'POST':
+            if current_user.is_admin and request.is_json:
+                data = request.json
+                app_sett.app_name = data['app_name']
+                app_sett.backup_enabled = data['backup_enabled']
+                app_sett.backup_type = data['backup_type']
+                app_sett.google_drive_id = data['google_drive_id']
+                app_sett.backup_file_prefix = data['backup_file_prefix']
+                app_sett.email_push_enabled = data['email_push_enabled']
+                app_sett.web_push_enabled = data['web_push_enabled']
+                app_sett.dynalist_api_token = data['dynalist_api_token']
+                app_sett.dynalist_api_url = data['dynalist_api_url']
+                app_sett.dynalist_api_file_id = data['dynalist_api_file_id']
+                app_sett.smtp_host = data['smtp_host']
+                app_sett.smtp_port = data['smtp_port']
+                app_sett.smtp_email = data['smtp_email']
+                app_sett.smtp_password = data['smtp_password']
+                db.session.commit()
+                return jsonify({'status': True, 'message': 'Saved successfully.'})
+        return render_template('admin.html', title='Admin panel', data=app_sett)
+    abort(403)
 
 
-@app.route('/logout')
+@app.route('/logout/')
 def logout():
     logout_user()
     return redirect(url_for('login'))
