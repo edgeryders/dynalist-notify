@@ -1,28 +1,4 @@
 {% extends 'layout.html' %}
-{% block navs %}<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="/">{{ config['APP_NAME'] }}</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navToggler">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarToggler">
-    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-<li class="nav-item active">
-        <a class="nav-link" href="#">Home</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('settings') }}">Settings</a>
-      </li>
-       {% if current_user.is_admin %}
-           <li class="nav-item">
-               <a class="nav-link" href="{{ url_for('admin') }}">Admin panel</a>
-           </li>
-      {% endif %}
-    </ul>
-      {% if current_user.is_authenticated %}
-    <a href="{{ url_for('logout') }}">Logout</a>
-      {% endif %}
-  </div>
-</nav>{% endblock navs %}
 {% block content %}
 <div class="row">
   <div class="col-sm-6">
@@ -31,10 +7,10 @@
         <h5 class="card-title">Tags</h5>
         <p class="card-text">Available Tags:</p>
         <ul class="list-group list-group-flush">
-          {% for user in users %}
-          <li class="list-group-item"><code>#{{ user['username'] }}</code> / <code>@{{ user['username'] }}</code><br>
-            <small class="text-muted">notification by {% if user['push_web'] %}browser push and {% endif %}
-              {% if user['push_email'] %}email to {{ user['email']}}{% endif %}.</small></li>
+          {% for tag in tags %}
+          <li class="list-group-item"><code>#{{ tag.username }}</code> / <code>@{{ tag.username }}</code><br>
+            <small class="text-muted">notification by {% if tag.web_push %}browser push and {% endif %}
+              {% if tag.push_email %}email to {{ tag.email }}{% endif %}.</small></li>
           {% endfor %}
   </ul>
         <a href="https://edgeryders.eu/t/dynalist-manual/7618" class="btn btn-primary">More Documentation</a>
@@ -50,7 +26,7 @@
     <li class="list-group-item">Upcoming Deadline: {{ taskinfo['next'] }}</li>
     <li class="list-group-item">Last Deadline: {{ taskinfo['last'] }} </li>
   </ul>
-        <a href="https://dynalist.io/d/{{ config['DYNALIST_FILE_ID'] }}#q=%23{{ session['username'] }}%20-is%3Acompleted" class="btn btn-primary">View todo tasks for {{ session['username'] }}</a>
+        <a href="https://dynalist.io/d/{{ config['DYNALIST_FILE_ID'] }}#q=%23{{ current_user.username }}%20-is%3Acompleted" class="btn btn-primary">View todo tasks for {{ current_user.username }}</a>
       </div>
     </div>
   </div>

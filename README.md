@@ -16,6 +16,9 @@
 
 **[4. Usage](#4-usage)**
 
+* [4.1. For developers](#41-for-developers)
+* [4.2. For users](#42-for-users)
+* [4.2. Command line tools](#43-command-line-tools)
 **[5. Admin and developer documentation](#5-admin-and-developer-documentation)**
 
 * [5.1. Starting in development mode](#51-starting-in-development-mode)
@@ -164,6 +167,15 @@ For detailed configuration head over here [Engine Configuration — SQLAlchemy 1
 
 ### 3.3. Drive setup for automated backups
 
+Whenever update is available, we put list of python code in [`update.txt`](https://raw.githubusercontent.com/edgeryders/dynalist_companion/master/update.txt) which is hosted on github.
+
+**To Update:**
+
+Make sure your virtual environment is active.
+
+`$ python admin.py update`
+
+### 3.4. Drive setup for automated backup
 Dynalist companion supports automated backup system for dynalist node, as per id specified in Admin panel.
 
 Setup:
@@ -179,7 +191,7 @@ Google drive integration: (Follow these steps on local machine and later move fi
 Goto: https://developers.google.com/drive/api/v3/quickstart/python
 1. Create project or choose existing one and enable drive api for your app.
 2. Click **DOWNLOAD CLIENT CONFIGURATION** which will download `credentials.json` and move it to project's resources directory.
-3. Enable Backup system to google drive in Admin panel (default to local disk).
+3. Enable Backup system to google drive in Admin panel (defaults to local disk).
 3. Execute `backup.py`, new instance of browser tab will open. (`$ python admin.py backup`)
 4. Give drive access to your app and `token.json` file will saved to your project's backup package's directory.
 5. Move `token.json` to resources directory.
@@ -245,11 +257,8 @@ The development usage above uses a small internal web server. That is not suitab
          WSGIDaemonProcess dynalist_companion user=user1 group=group1 threads=5 python-home=/path/to/project/venv python-path=/path/to/project:/path/to/project/dynalist_companion
        </IfModule>
        
-    Here, you have to adapt the `user`, `group`, `python-home` and `python-path` parameters as follows:
-    
-    Set `python-home` to the path shown to you for `WSGIPythonHome` by the command `mod_wsgi-express module-config`, a few steps above. In our case, this is the only thing required (and the recommended solution) to set up Apache2 correctly to use our Python virtual environment ([overview and details](https://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html)).
-    
-    Set `python-path` to both the project directory and the `dynalist_companion` subdirectory inside the project directory, separated with a colon. This is because we have files with python code with `import` statements in both directories, expecting Python to find packages in the subdirectories. (In the project directory itself, this refers to the `.wsgi` file saying `from dynalist_companion import …`.)
+    Here, you have to adapt the `user`, `group`, `python-home` and `python-path` parameters. Set `pyhton-home` to the path shown to you for `WSGIPythonHome` by the command `mod_wsgi-express module-config`, a few steps above. In our case, this is the only thing required, and the recommended solution, to set up Apache2 correctly to use our Python virtual environment ([overview and details](https://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html)). This is the only Set `python-path` to both the project directory and the `dynalist_companion` subdirectory with the source code inside the project directory, separated with a colon. This is because we have files with python code with `import` statements in both directories, expecting Python to find packages in the subdirectories. (In the project directory itself, this refers to the `.wsgi` file saying `from dynalist_companion import …`.)
+
 
     Explanations: **(1)** The WSGIDaemonProcess can also be put into a VirtualHost section, but a daemon process group with the same name must only be defined once per server (or Apache will not start). So we better put it into the global section. This also avoids issues with server control panels (like ISPConfig) that accept custom configuration for VirtualHost sections but will deploy them identically in *both* the VirtualHost sections for the HTTP and HTTPS versions. **(2)** The `python-path` argument seems to be the only way to include the project's directory into the Python path. The directive `WSGIPythonPath` does not work here ([reason](https://stackoverflow.com/a/12931688)).
 
@@ -278,8 +287,6 @@ The development usage above uses a small internal web server. That is not suitab
 
        service apache2 reload
        
-    This is necessary because for `mod_wsgi` to find all newly installed Python packages, including those of the Dynalist Companion application itself. Otherwise you can get error messages like `ModuleNotFoundError: No module named 'flask_login'`.
-       
 10. Set up cron for automatic calls to send notifications.
 
     For e-mail notifications to work, the `admin.py notify` command has to be called by `cron`, for example every 20 minutes. On each run, it will detect new changes to the Dynalist file and send notifications out as required. An example crontab line would be this:
@@ -288,7 +295,7 @@ The development usage above uses a small internal web server. That is not suitab
        
     Explanations: **(1)** The `*/20` specifies that the command will run every 20 minutes. **(2)** `cron` uses the `sh` shell by default, which does not have the `source` builtin we need for virtualenv activation. We fix this by starting `bash` instead, as [shown here](https://stackoverflow.com/a/50556692). **(3)** Then we wait for a random number of 0-120 seconds to prevent load spikes on the Dynalist servers at minutes 0, 20 and 40 if more people start using this software. The technique was adapted [from here](https://stackoverflow.com/a/16289693). **(4)** Note the use of `\%` in the `sleep $(($RANDOM \% 120))s` command because an unescaped `%` terminates the line (!!) in crontab syntax.
     
-    Troubleshooting: Check syslog (`tail /var/log/syslog`) to be sure the cronjob gets executed, and under which user and with which command. Check `/path/to/your/project/dynalist_companion/resources/events.log` for the log output of your cron job runs and of any equivalent commands that you run in the console. To see the full output of your cron jobs incl. crash backtraces, you can temporarily [log cron output to a file](https://stackoverflow.com/a/3287063). Also, if no e-mails arrive make sure that the existing `./resources/old.txt` is writeable by the cron job's user – otherwise the script will fail when trying to overwrite it.
+    Troubleshooting: Check syslog (`tail /var/log/syslog`) to be sure the cronjob gets executed, and under which user and with which command. Check `/path/to/your/project/dynalist_companion/resources/notify.log` for the log output of your cron job runs and of any equivalent commands that you run in the console. To see the full output of your cron jobs incl. crash backtraces, you can temporarily [log cron output to a file](https://stackoverflow.com/a/3287063). Also, if no e-mails arrive make sure that the existing `./resources/old.txt` is writeable by the cron job's user – otherwise the script will fail when trying to overwrite it.
 
        
 Your installation should now be functional.
@@ -332,6 +339,22 @@ When you finished the basic installation, you can already use the software for t
 
        python admin.py runserver
 
+       
+This has to be done inside the Python virtual environment (see above). This way, `python` will automatically refer to the right Python version. You can now access the web application by visiting this URL in your browser: `http://127.0.0.1:8080` (if you configured it to use a different port in `config.py`, use that of course).
+
+**Starting in debug mode:** Start the web application with its internal server, but also append the optional parameter `--debug`:
+
+       python manage.py -runserver --debug
+
+**Sending notifications:** Run the notification package to get and process the Dynalist content and send notifications *once* with:
+
+       source /path/to/your/project/venv/bin/activate && python /path/to/your/project/dynalist_companion/admin.py activate
+       
+When you also finished the installation steps for the production environment, the application will be publicly accessible on the Internet and send notifications regularly using `cron`. You can still also process and send notifications manually by executing the following command. The difference to the version above is that you execute it as user `username` that your webserver uses to execute the Dynalist Companion software, to not mess up the file access rights of files created by the command.
+
+       sudo -H -u username bash -c "source /path/to/your/project/venv/bin/activate && python /path/to/your/project/dynalist_companion/admin.py notify"
+
+**Test-run for sending notifications:** You can *test* before which notifications would be sent, without sending any, by appending the `--dry-run` parameter to `notify`. So for example, following the first variant of the command from above:
     This has to be done inside the Python virtual environment (see above). This way, `python` will automatically refer to the right Python version.
     
 3. **Access the application.** You can now access the web application by visiting this URL in your browser: `http://127.0.0.1:8080` (if you configured it to use a different port in `config.py`, use that of course).
@@ -367,6 +390,7 @@ Dynalist Companion comes with a powerful integrated command line tool called `ad
 
 After providing executable permissions to `admin.py` via `python chmod +x admin.py`, you can call the command line tool simply as:
 
+*`admin.py` use python's virtual environment binary (./venv/bin/python) located on root directory of its location.*
         $ ./admin.py --help
 
 The tool will still use the Python virtual environment's Python binary.
@@ -377,9 +401,14 @@ Documentation of the command line options (by example):
 
         $ ./admin.py usermod --username alex --new-username john --email john@example.com --rand --admin 1
 
-* Run the local web server on IP address `127.0.0.1` and port `8080` (also the defaults), in debugging mode (more details under `./admin.py runserver --help`):
+Run local web server in host `0.0.0.1` and port `8080` with debugging mode.
 
-        $ admin.py runserver --host 0.0.0.1 --port 8181 --debug
+*(more details: `$ ./admin.py runserver --help`)*
+
+`$ admin.py runserver --host 0.0.0.1 --port 8181 --debug`
+
+[defaults: --host 127.0.0.1 --port 8080]
+
 
 * Update the Dynalist Companion software:
  
@@ -387,8 +416,15 @@ Documentation of the command line options (by example):
 
 * Create and send notifications: (more details under `./admin.py notify --help`):
 
-        $ admin.py notify
+`$ ./admin.py notify`
 
 * Create a backup:
 
-        $ admin.py backup
+       $ ./admin.py backup
+
+### 4.4 Using Flask debugger
+
+The interactive debugger allows you to execute code directly in your browser at any specific point in the stack trace.
+
+It’s unbelievably useful for debugging exceptions and is often faster than dropping in print statements into your code base when debugging certain types of errors.
+

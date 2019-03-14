@@ -1,205 +1,209 @@
 {% extends 'layout.html' %}
-{% block navs %}
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="/">{{ config['APP_NAME'] }}</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navToggler">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-
-  <div class="collapse navbar-collapse" id="navbarToggler">
-    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-<li class="nav-item">
-        <a class="nav-link" href="/">Home</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('settings') }}">Settings</a>
-      </li>
-      <li class="nav-item active">
-        <a class="nav-link" href="#">Admin panel</a>
-      </li>
-  </ul>
-      <a href="{{ url_for('logout') }}">Logout</a>
-  </div>
-</nav>
-{% endblock navs %}
 {% block content %}
 <div class="container">
-{% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" role="alert">
-              {{ message }}
-            </div>
-            {% endfor %}
-         {% endif %}
-         {% endwith %}
-<form method="post" action="">
-    {{ form.hidden_tag() }}
+  <ul class="nav nav-tabs" id="myTab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" id="main-tab" data-toggle="tab" href="#main" role="tab" aria-controls="main" aria-selected="true">Main</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="dynalist-tab" data-toggle="tab" href="#dynalist" role="tab" aria-controls="dynalist" aria-selected="false">Dynalist</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="smtp-tab" data-toggle="tab" href="#smtp" role="tab" aria-controls="smtp" aria-selected="false">SMTP</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="backup-tab" data-toggle="tab" href="#backup" role="tab" aria-controls="backup" aria-selected="false">Backup</a>
+  </li>
+</ul>
+  <form id="admin-form">
+<div class="tab-content" id="myTabContent">
+  <div class="tab-pane fade show active" id="main" role="tabpanel" aria-labelledby="main-tab">
 
     <div class="form-group">
-    {{ form.app_name.label }}
-    {{ form.app_name(class="form-control") }}
+      <label for="app_name">App Name</label>
+      <input type="text" id="app_name" class="form-control" value="{{ data.app_name }}">
     </div>
 
     <div class="form-group">
-    {{ form.dynalist_api_url.label }}
-    {{ form.dynalist_api_url(class="form-control") }}
-    </div>
-
-    <div class="form-group">
-        {{ form.dynalist_api_token.label }}
-        {{ form.dynalist_api_token(class="form-control") }}
-    </div>
-
-    <div class="form-group">
-        {{ form.dynalist_api_file_id.label }}
-        {{ form.dynalist_api_file_id(class="form-control") }}
-    </div>
-
-    <div class="form-group">
-        {{ form.smtp_host.label }}
-        {{ form.smtp_host(class="form-control") }}
-    </div>
-
-    <div class="form-group">
-        {{ form.smtp_port.label }}
-        {{ form.smtp_port(class="form-control") }}
-    </div>
-
-    <div class="form-group">
-        {{ form.smtp_email.label }}
-        {{ form.smtp_email(class="form-control") }}
-    </div>
-
-    <div class="form-group">
-        {{ form.secret_code.label }}
-        {{ form.secret_code(class="form-control") }}
-    </div>
-
-    <div class="form-group">
-    {{ form.smtp_password.label }}
-    {{ form.smtp_password(class="form-control") }}
+       <label for="secret_code">Secret code</label>
+      <input type="text" id="secret_code" class="form-control" value="{{ data.secret_code }}">
     </div>
 
     <div class="form-check">
-        {{ form.backup_enabled(class="form-check-input") }}
-        {{ form.backup_enabled.label(class="form-check-label") }}
+      <input type="checkbox" id="email_push_enabled" class="form-check-input"{% if data.email_push_enabled %} checked{% endif %}>
+      <label for="email_push_enabled" class="form-check-label">Email push</label>
+    </div>
+
+    <div class="form-check">
+      <input type="checkbox" id="web_push_enabled" class="form-check-input"{% if data.web_push_enabled %} checked{% endif %}>
+      <label for="web_push_enabled" class="form-check-label">Web push</label>
+    </div>
+
+    <div class="form-group">
+    <label for="old_file">Old file</label>
+      <input type="text" id="old_file" class="form-control"  value="{{ data.old_file }}">
+    </div>
+
+    <div class="form-group">
+    <label for="new_file">New file</label>
+      <input type="text" id="new_file" class="form-control"  value="{{ data.new_file }}">
+    </div>
+
+  </div>
+  <div class="tab-pane fade" id="dynalist" role="tabpanel" aria-labelledby="dynalist-tab">
+
+    <div class="form-group">
+      <label for="dynalist_api_url">Dynalist api url</label>
+      <input type="text" id="dynalist_api_url" class="form-control" value="{{ data.dynalist_api_url }}">
+    </div>
+
+    <div class="form-group">
+        <label for="dynalist_api_token">Dynalist api token</label>
+      <input type="text" id="dynalist_api_token" class="form-control" value="{{ data.app_name }}">
+    </div>
+
+    <div class="form-group">
+      <label for="dynalist_api_file_id">Dynalist file id</label>
+      <input type="text" id="dynalist_api_file_id" class="form-control" value="{{ data.dynalist_api_token }}">
+    </div>
+
+  </div>
+  <div class="tab-pane fade" id="smtp" role="tabpanel" aria-labelledby="smtp-tab">
+
+    <div class="form-group">
+      <label for="smtp_host">SMTP host</label>
+      <input type="text" id="smtp_host" class="form-control" value="{{ data.smtp_host }}">
+    </div>
+
+    <div class="form-group">
+        <label for="smtp_port">SMTP port</label>
+      <input type="text" id="smtp_port" class="form-control" value="{{ data.smtp_port }}">
+    </div>
+
+    <div class="form-group">
+      <label for="smtp_email">SMTP email</label>
+      <input type="text" id="smtp_email" class="form-control" value="{{ data.smtp_email }}">
+    </div>
+
+    <div class="form-group">
+       <label for="smtp_password">SMTP password</label>
+      <input type="text" id="smtp_password" class="form-control" value="{{ data.secret_code }}">
+    </div>
+
+  </div>
+  <div class="tab-pane fade" id="backup" role="tabpanel" aria-labelledby="backup-tab">
+    <div class="form-check">
+      <input type="checkbox" id="backup_enabled" class="form-check-input">
+      <label for="backup_enabled" class="form-check-label">Enable backup</label>
     </div>
 
   <div id="BackUpFields">
   <div class="form-group">
-      {{ form.backup_type.label }}
-      {{ form.backup_type(class="form-control") }}
-    </div>
-
-    <div class="form-group" id="{{ form.google_drive_id.id }}">
-      {{ form.google_drive_id.label }}
-      {{ form.google_drive_id(class="form-control") }}
-    </div>
-
-
-    <div class="form-group">
-        {{ form.backup_file_prefix.label }}
-        {{ form.backup_file_prefix(class="form-control") }}
+    <label for="backup_type">Backup type</label>
+      <select id="backup_type" class="custom-select">
+        <option value="0">None</option>
+        <option value="1">Drive</option>
+        <option value="2">Google Drive</option>
+      </select>
     </div>
 
     <div class="form-group">
-    {{ form.backup_dir.label }}
-      {% if form.backup_dir.errors %}
-                 {{ form.backup_dir(class="form-control is-invalid") }}
-                 <div class="invalid-feedback">
-                 {% for error in form.backup_dir.errors %}
-                     <span>{{ error }}</span>
-                     </div>
-                 {% endfor %}
-             {% else %}
-                 {{ form.backup_dir(class="form-control") }}
-             {% endif %}
+      <label for="google_drive_id">Google drive id</label>
+      <input type="text" id="google_drive_id" class="form-control" value="{{ data.google_drive_id }}">
+    </div>
+
+    <div class="form-group">
+      <label for="backup_file_prefix">Backup file prefix</label>
+      <input type="text" id="backup_file_prefix" class="form-control"  value="{{ data.backup_file_prefix }}">
+    </div>
+
+    <div class="form-group">
+      <label for="backup_dir">Backup directory</label>
+      <input type="text" id="backup_dir" class="form-control" value="{{ data.backup_dir }}">
     </div>
   </div>
-
-    <div class="form-check">
-        {{ form.email_push_enabled(class="form-check-input") }}
-        {{ form.email_push_enabled.label(class="form-check-label") }}
-    </div>
-
-    <div class="form-check">
-        {{ form.web_push_enabled(class="form-check-input") }}
-        {{ form.web_push_enabled.label(class="form-check-label") }}
-    </div>
-
-    <div class="form-group">
-    {{ form.old_file.label }}
-    {% if form.old_file.errors %}
-                 {{ form.old_file(class="form-control is-invalid") }}
-                 <div class="invalid-feedback">
-                 {% for error in form.old_file.errors %}
-                     <span>{{ error }}</span>
-                     </div>
-                 {% endfor %}
-             {% else %}
-                 {{ form.old_file(class="form-control") }}
-             {% endif %}
-    </div>
-
-    <div class="form-group">
-    {{ form.new_file.label }}
-      {% if form.new_file.errors %}
-                 {{ form.new_file(class="form-control is-invalid") }}
-                 <div class="invalid-feedback">
-                 {% for error in form.new_file.errors %}
-                     <span>{{ error }}</span>
-                     </div>
-                 {% endfor %}
-             {% else %}
-                 {{ form.new_file(class="form-control") }}
-             {% endif %}
-    </div>
-    {{ form.submit(class="btn btn-primary") }}
+  </div>
+  <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">...</div>
+</div>
+    <button type="submit" class="btn btn-primary">Save</button>
 </form>
-
 {% endblock content %}
-{% block footer %}
-  {{ super() }}
-<script>
+{% block custom_scripts %}
+<script defer>
 $(function() {
+  let form = $('#admin-form');
   let backup_checkbox = $("#backup_enabled");
   let hide_fields = $("#BackUpFields");
   let gdrive = $("#google_drive_id");
   let backup_type = $("#backup_type");
   let backup_dir = $("#backup_dir");
+
+  if ('{{ data.backup_enabled }}' === 'True') {
+    backup_checkbox.prop('checked', true)
+  }
+
+  if ('{{ data.backup_type }}' === "1") {
+    backup_type.find('option[value=1]').prop('selected', true)
+  } else  if ('{{ data.backup_type }}' === "2") {
+    backup_type.find('option[value=2]').prop('selected', true)
+  }
+
+
+
   if (!backup_checkbox.is(':checked'))  {
-    hide_fields.hide();
+    hide_fields.hide(300);
   }
   backup_checkbox.change(function() {
+    hide_fields.hide(300);
     if (backup_checkbox.is(':checked')) {
-      hide_fields.show(1000);
-    } else {
-      hide_fields.hide(1000);
+      hide_fields.show(300);
+      gdrive.closest('.form-group').show();
+      backup_dir.closest('.form-group').show();
+      if (backup_type.val() !== "2") {
+        gdrive.closest('.form-group').hide();
+      } else if (backup_type.val() !== "1") {
+        backup_dir.closest('.form-group').hide(300);
+      }
     }
   });
-  if (backup_type.val() !== "2") {
-    gdrive.hide();
-  }
   backup_type.change(function () {
+    gdrive.closest('.form-group').hide(300);
+    backup_dir.closest('.form-group').hide(300);
     if (backup_type.val() === "2") {
-      gdrive.show(1000);
-    } else {
-      gdrive.hide(1000);
+      gdrive.closest('.form-group').show(300);
+    } else if (backup_type.val() === "1") {
+      backup_dir.closest('.form-group').show(300);
+    } else if (backup_type.val() === "0") {
+      backup_checkbox.prop('checked', false);
+      hide_fields.hide(300);
     }
   });
 
-  if (backup_type.val() !== "1") {
-    backup_dir.hide(1000);
-  }
-  backup_type.change(function () {
-    if (backup_type.val() === "1") {
-      backup_dir.show(1000);
-    } else {
-      backup_dir.hide(1000);
-    }
-  });
+
+  form.submit(function (event) {
+    let data = {};
+    $('#admin-form :input').each(function () {
+      data[$(this).prop('id')] = ($(this).is(':checkbox') ? $(this).is(':checked') : $(this).prop('value'))
+    });
+    $.ajax({
+      url: "{{ url_for('admin') }}",
+      type: 'POST',
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify(data),
+      success: function (data) {
+        if (data.status) {
+          alert(data.message)
+        }
+      },
+      error: function () {
+        alert('Something went wrong')
+      }
+    });
+    event.preventDefault();
+  })
+
 });
 </script>
-{% endblock footer %}
+{% endblock custom_scripts %}
 </div>

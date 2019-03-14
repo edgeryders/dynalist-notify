@@ -1,30 +1,4 @@
 {% extends 'layout.html' %}
-{% block navs %}
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="/">{{ config['APP_NAME'] }}</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navToggler">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-
-  <div class="collapse navbar-collapse" id="navbarToggler">
-    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-<li class="nav-item">
-        <a class="nav-link" href="/">Home</a>
-      </li>
-      <li class="nav-item active">
-        <a class="nav-link" href="#">Settings</a>
-      </li>
-      {% if current_user.is_admin %}
-           <li class="nav-item">
-               <a class="nav-link" href="{{ url_for('admin') }}">Admin Panel</a>
-           </li>
-      {% endif %}
-  </ul>
-      <a href="{{ url_for('logout') }}">Logout</a>
-  </div>
-</nav>
-{% endblock navs %}
-
 {% block content %}
 <div class="container">
 {% with messages = get_flashed_messages(with_categories=true) %}

@@ -2,11 +2,17 @@ from . import db, login_manager
 from re import findall
 from datetime import datetime
 from flask_login import UserMixin
+from sqlalchemy.inspection import inspect
 
 
 @login_manager.user_loader
 def load_user(user_id):
     return Users.query.get(int(user_id))
+
+
+def serialize(object_):
+    # @ returns dictionary object with model field name as key
+    return {c: getattr(object_, c) for c in inspect(object_).attrs.keys()}
 
 
 class Users(db.Model, UserMixin):
@@ -23,7 +29,7 @@ class Users(db.Model, UserMixin):
 
 def deadlines(username):
     try:
-        app_sett = AppSettings().query.get('core')
+        app_sett = AppSettings.query.get('core')
         read_file = open(app_sett.old_file, 'r', encoding='utf-8').read()
         dates = findall('.*(20[0-9]{2}-\d{2}-\d{2}).*\.\s.*#%s' % username, read_file)
         dates = [datetime.strptime(date, '%Y-%m-%d') for date in dates]
@@ -44,24 +50,24 @@ def deadlines(username):
 
 class AppSettings(db.Model):
     sett = db.Column(db.String(), primary_key=True)
-    backup_enabled = db.Column(db.SmallInteger)
+    backup_enabled = db.Column(db.Boolean)
     backup_type = db.Column(db.SmallInteger)  # 1 = drive, 2 = google drive
-    google_drive_id = db.Column(db.String())
-    backup_file_prefix = db.Column(db.String())
-    email_push_enabled = db.Column(db.SmallInteger)  # 1 = enabled, 0 = disabled
-    web_push_enabled = db.Column(db.SmallInteger)  # 1 = enabled, 0 = disabled
-    dynalist_api_token = db.Column(db.String())
-    dynalist_api_url = db.Column(db.String())
-    dynalist_api_file_id = db.Column(db.String())
-    smtp_host = db.Column(db.String())
+    google_drive_id = db.Column(db.String(100))
+    backup_file_prefix = db.Column(db.String(32))
+    email_push_enabled = db.Column(db.Boolean)
+    web_push_enabled = db.Column(db.Boolean)
+    dynalist_api_token = db.Column(db.String(255))
+    dynalist_api_url = db.Column(db.String(255))
+    dynalist_api_file_id = db.Column(db.String(255))
+    smtp_host = db.Column(db.String(50))
     smtp_port = db.Column(db.Integer)
-    smtp_email = db.Column(db.String())
-    smtp_password = db.Column(db.String())
-    secret_code = db.Column(db.String())
-    app_name = db.Column(db.String())
-    old_file = db.Column(db.String())
-    new_file = db.Column(db.String())
-    backup_dir = db.Column(db.String())
+    smtp_email = db.Column(db.String(50))
+    smtp_password = db.Column(db.String(32))
+    secret_code = db.Column(db.String(32))
+    app_name = db.Column(db.String(32))
+    old_file = db.Column(db.String(100))
+    new_file = db.Column(db.String(100))
+    backup_dir = db.Column(db.String(100))
 
 
 def get_dynalist_data():
