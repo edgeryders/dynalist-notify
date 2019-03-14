@@ -10,15 +10,21 @@
 
 * [3.1. Basic installation](#31-basic-installation)
 * [3.2. Database configuration](#32-database-configuration)
-* [3.3. Updating software](#33-updating-and-upgrading-software)
-* [3.4. Drive setup for automated backup](#34-drive-setup-for-automated-backup)
-* [3.5. Additional steps for production environments (Apache)](#35-additional-steps-for-production-environments-apache)
+* [3.3. Drive setup for automated backups](#33-drive-setup-for-automated-backups)
+* [3.4. Additional steps for production environments (Apache)](#34-additional-steps-for-production-environments-apache)
+* [3.5. Updating the application](#35-updating-the-application)
 
 **[4. Usage](#4-usage)**
 
 * [4.1. For developers](#41-for-developers)
 * [4.2. For users](#42-for-users)
 * [4.2. Command line tools](#43-command-line-tools)
+**[5. Admin and developer documentation](#5-admin-and-developer-documentation)**
+
+* [5.1. Starting in development mode](#51-starting-in-development-mode)
+* [5.2. Starting in debug mode](#52-starting-in-debug-mode)
+* [5.3. Sending notifications](#53-sending-notifications)
+* [5.4. Command line tool usage](#54-command-line-tool-usage)
 
 ----
 
@@ -146,31 +152,20 @@ Congratulations!!!
 
 ### 3.2. Database Configuration
 
-We are using ORM based database management system called **SQLAlchemy**.
-SQLAlchemy support verity of database engine, such as sqlite, mysql, postgres, etc, by default we are using sqlite3.
-You can choose any database engine as your choice.
-To use configure your favorite choice of database, tweak setting in `config.py` and locate a line `SQLALCHEMY_DATABASE_URI`.
+We are using an object-relational mapping (ORM) system ORM called SQLAlchemy. It supports a variety of database engines, such as SQlite, MySql, MariaDB, PostgreSQL etc.. You can choose any of them; by default, we use SQlite3.
 
-**Postgres:**
+To configure your choice of database, open `config.py` and change the string value of setting `SQLALCHEMY_DATABASE_URI` to:
 
-`postgresql://username:password@host/database_name`
-
-**MySQL:**
-
-`mysql://username:password@host/database_name`
-
-**Oracle:**
-
-`oracle://username:password@host/database_name`
+* `sqlite:///{RESOURCES_PATH}database.db` for SQlite
+* `postgresql://username:password@host/database_name` for PostgreSQL
+* `mysql://username:password@host/database_name` for MySQL / MariaDB
+* `oracle://username:password@host/database_name` for Oracle
 
 
 For detailed configuration head over here [Engine Configuration — SQLAlchemy 1.2 Documentation](https://docs.sqlalchemy.org/en/latest/core/engines.html)
 
-### 3.3. Updating and upgrading software
 
-For convention we made simple for updating and upgrading the software.
-
-Simple one line commands is enough to do, nothing more.
+### 3.3. Drive setup for automated backups
 
 Whenever update is available, we put list of python code in [`update.txt`](https://raw.githubusercontent.com/edgeryders/dynalist_companion/master/update.txt) which is hosted on github.
 
@@ -202,7 +197,8 @@ Goto: https://developers.google.com/drive/api/v3/quickstart/python
 5. Move `token.json` to resources directory.
 6. Move all above files to files to remote host.
 
-### 3.5. Additional steps for production environments (Apache)
+
+### 3.4. Additional steps for production environments (Apache)
 
 The development usage above uses a small internal web server. That is not suitable with respect to load and security in production environments, though. For that, we will need additional steps. This section shows the additional steps when you use the Apache2 web server (under Ubuntu / Debian Linux here).
 
@@ -225,7 +221,7 @@ The development usage above uses a small internal web server. That is not suitab
           # If you installed Python 3.6 from your distribution's default repository:
           $ sudo apt install python3-dev
 
-          # If yoy installed Python 3.6 from a PPA repository, as instructed above for Ubuntu 16.04:
+          # If you installed Python 3.6 from a PPA repository, as instructed above for Ubuntu 16.04:
           $ sudo apt install python3.6-dev
 
    3. Install `mod_wsgi` via PIP (which will include automatic compilation):
@@ -250,9 +246,9 @@ The development usage above uses a small internal web server. That is not suitab
 
 4. Create a file `dynalist_companion.wsgi` in your project directory with the following content:
 
-       from dynalist_companion.run import app as application
+       from dynalist_companion.app import app as application
        
-    Notes: We could not simply import the whole module ("file") `run.py` since it does not contain a factory function for automatic creation of the application. Instead, it imports other stuff and that creates a singleton application in `app/__init__.py` in line `app = Flask(__name__)`. We need to import that object `app`, and it is only a part of the `run` module ("file")! For reference, see here [here](http://flask.pocoo.org/docs/1.0/deploying/mod_wsgi/#creating-a-wsgi-file) and [here](https://stackoverflow.com/a/21948893).
+    Notes: We could not simply import the whole module `app` (file `app.py`) since it does not contain a factory function for automatic creation of the application. Instead, it imports other stuff and that creates a singleton application in `app/__init__.py` in line `app = Flask(__name__)`. We need to import that object `app`, and it is only a part of the `app` module / `app.py` file! For reference, see here [here](http://flask.pocoo.org/docs/1.0/deploying/mod_wsgi/#creating-a-wsgi-file) and [here](https://stackoverflow.com/a/21948893).
        
 5. Add the following to your global Apache2 server configuration. For example on Ubuntu Linux, place it into `/etc/apache2/conf-available/wsgi-local.conf` and enable it with `a2enconf wsgi-local`.
 
@@ -262,6 +258,7 @@ The development usage above uses a small internal web server. That is not suitab
        </IfModule>
        
     Here, you have to adapt the `user`, `group`, `python-home` and `python-path` parameters. Set `pyhton-home` to the path shown to you for `WSGIPythonHome` by the command `mod_wsgi-express module-config`, a few steps above. In our case, this is the only thing required, and the recommended solution, to set up Apache2 correctly to use our Python virtual environment ([overview and details](https://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html)). This is the only Set `python-path` to both the project directory and the `dynalist_companion` subdirectory with the source code inside the project directory, separated with a colon. This is because we have files with python code with `import` statements in both directories, expecting Python to find packages in the subdirectories. (In the project directory itself, this refers to the `.wsgi` file saying `from dynalist_companion import …`.)
+
 
     Explanations: **(1)** The WSGIDaemonProcess can also be put into a VirtualHost section, but a daemon process group with the same name must only be defined once per server (or Apache will not start). So we better put it into the global section. This also avoids issues with server control panels (like ISPConfig) that accept custom configuration for VirtualHost sections but will deploy them identically in *both* the VirtualHost sections for the HTTP and HTTPS versions. **(2)** The `python-path` argument seems to be the only way to include the project's directory into the Python path. The directive `WSGIPythonPath` does not work here ([reason](https://stackoverflow.com/a/12931688)).
 
@@ -281,13 +278,18 @@ The development usage above uses a small internal web server. That is not suitab
            </Directory>
        </IfModule>
        
-8. Reload the Apache2 configuration:
+8. If you are using SQLite as your database, make its database file (as referenced in `config.py`) readable and writable by the user used to run the Apache server process. That's the user as you configured it in `/etc/apache2/conf-available/wsgi-local.conf`. The simplest is to make all project files `+rw` by that user:
+
+        $ cd /path/to/your/project/dynalist_companion/
+        $ chown -R user1:group1 *
+
+9. Reload the Apache2 configuration:
 
        service apache2 reload
        
-9. Set up cron for automatic calls to `notify`.
+10. Set up cron for automatic calls to send notifications.
 
-    For e-mail notifications to work, the `notify` package has to be called by `cron`, for example every 20 minutes. On each run, it will detect new changes to the Dynalist file and send notifications out as required. An example crontab line would be this:
+    For e-mail notifications to work, the `admin.py notify` command has to be called by `cron`, for example every 20 minutes. On each run, it will detect new changes to the Dynalist file and send notifications out as required. An example crontab line would be this:
     
        */20 * * * * /usr/bin/env bash -c 'sleep $(($RANDOM \% 120))s && source /path/to/your/project/venv/bin/activate && python /path/to/your/project/dynalist_companion/admin.py notify'
        
@@ -299,17 +301,41 @@ The development usage above uses a small internal web server. That is not suitab
 Your installation should now be functional.
 
 
+### 3.5. Updating the application
+
+For your comfort, the application includes a command line feature to upgrade itself. Whenever an update becomes available, the migration code is put into [`update.txt`](https://raw.githubusercontent.com/edgeryders/dynalist_companion/master/update.txt)`, hosted on Github.
+
+To update the application:
+
+1. Make sure your virtual environment is active and you're in the project's source directory.
+
+2. Let the software update itself by executing:
+
+        $ python admin.py update
+        
+3. Reload the Apache configuration:
+
+        $ sudo service apache2 reload
+
+    This is necessary because for `mod_wsgi` to find all newly installed Python packages, including those that may have come with the update of Dynalist Companion. Otherwise you can get error messages like `ModuleNotFoundError: No module named 'flask_login'`.
+
+
 ## 4. Usage
 
-### 4.1. For developers
+Our documentation for end users, including how to register and use the application, is available in [our Dynalist Manual](https://edgeryders.eu/t/7618) in section "4. Get notifications about new tasks". It is written specifically for our own installation, but you can easily adapt it to your case.
+
+
+## 5. Admin and developer documentation
+
+### 5.1. Starting in development mode
 
 When you finished the basic installation, you can already use the software for testing and development as follows:
 
-**Entering the virtual environment:** After each SSH login, you need to enter ("activate") the software's Python virtual environment. This way, all following Python related commands will use the Python, PIP and libraries of that environment. You can do this with an absolute path as follows:
+1. **Enter the virtual environment.** After each SSH login, you need to enter ("activate") the software's Python virtual environment. This way, all following Python related commands will use the Python, PIP and libraries of that environment. You can do this with an absolute path as follows:
 
        source /path/to/your/project/venv/bin/activate
 
-**Starting the web application:** Start the web application for testing and development purposes as follows, using its integrated web server:
+2. **Start the web application.** Start the web application for testing and development purposes as follows, using its integrated web server:
 
        python admin.py runserver
 
@@ -329,40 +355,51 @@ When you also finished the installation steps for the production environment, th
        sudo -H -u username bash -c "source /path/to/your/project/venv/bin/activate && python /path/to/your/project/dynalist_companion/admin.py notify"
 
 **Test-run for sending notifications:** You can *test* before which notifications would be sent, without sending any, by appending the `--dry-run` parameter to `notify`. So for example, following the first variant of the command from above:
+    This has to be done inside the Python virtual environment (see above). This way, `python` will automatically refer to the right Python version.
+    
+3. **Access the application.** You can now access the web application by visiting this URL in your browser: `http://127.0.0.1:8080` (if you configured it to use a different port in `config.py`, use that of course).
+
+
+### 5.2. Starting in debug mode
+
+Start the web application like for development mode, using its internal server, but also append the optional parameter `--debug`:
+
+       python manage.py runserver --debug
+
+
+### 5.3. Sending notifications
+
+**Test-run for sending notifications:** You can *test* before which notifications would be sent, without sending any, by appending the `--dry-run` parameter to `admin.py notify`. So for example, following the first variant of the command from above:
 
        source /path/to/your/project/venv/bin/activate && python /path/to/your/project/dynalist_companion/admin.py notify --dry-run
+
+**Sending notifications for real:** Run the notification script to get and process the Dynalist content and send notifications *once* with:
+
+       source /path/to/your/project/venv/bin/activate && python /path/to/your/project/dynalist_companion/admin.py notify
+       
+**Sending notifications via cron:** When you also finished the installation steps for the production environment, the application will be publicly accessible on the Internet and send notifications regularly using `cron`. You can still also process and send notifications manually by executing the following command. The difference to the version above is that you execute it as user `username` that your webserver uses to execute the Dynalist Companion software, to not mess up the file access rights of files created by the command.
+
+       sudo -H -u username bash -c "source /path/to/your/project/venv/bin/activate && python /path/to/your/project/dynalist_companion/admin.py notify"
        
 
-### 4.2. For users
+### 5.4. Command line tool usage
 
-Our documentation for end users, including how to register and use the application, is available in [our Dynalist Manual](https://edgeryders.eu/t/7618) in section "4. Get notifications about new tasks". It is written specifically for our own installation, but you can easily adapt it to your case.
+Dynalist Companion comes with a powerful integrated command line tool called `admin.py`. You can use this command line tool by executing:
 
+        $ python admin.py --help
 
-### 4.3. Command line tools
-
-We have powerful integrated command line tool called `admin.py`.
-
-You can call command line tool by executing `$ python admin.py --help`.
-
-To remove `python` from each typing, provide execute permission to `admin.py`.
-
-`$ python chmod +x admin.py`
-
-Now you can execute:
-
-`$ ./admin.py --help`
+After providing executable permissions to `admin.py` via `python chmod +x admin.py`, you can call the command line tool simply as:
 
 *`admin.py` use python's virtual environment binary (./venv/bin/python) located on root directory of its location.*
+        $ ./admin.py --help
 
+The tool will still use the Python virtual environment's Python binary.
 
-Examples:
+Documentation of the command line options (by example):
 
-Change username, email for alex, generate random password and mark as admin.
+* Change username, email for alex, generate random password and mark as admin (more details under `./admin.py usermod --help`):
 
-*(more details: `$ ./admin.py usermod --help`)*
-
-`$ ./admin.py usermod --username alex --new-username john --email john@example.com --rand --admin 1`
-
+        $ ./admin.py usermod --username alex --new-username john --email john@example.com --rand --admin 1
 
 Run local web server in host `0.0.0.1` and port `8080` with debugging mode.
 
@@ -372,23 +409,22 @@ Run local web server in host `0.0.0.1` and port `8080` with debugging mode.
 
 [defaults: --host 127.0.0.1 --port 8080]
 
-Update dynalist_companion:
- 
-`$ admin.py update`
 
-Run notify extension: (more details: `$ ./admin.py notify --help`)
+* Update the Dynalist Companion software:
+ 
+        $ admin.py update
+
+* Create and send notifications: (more details under `./admin.py notify --help`):
 
 `$ ./admin.py notify`
 
-Run backup extension:
+* Create a backup:
 
-`$ ./admin.py backup`
+       $ ./admin.py backup
 
 ### 4.4 Using Flask debugger
 
 The interactive debugger allows you to execute code directly in your browser at any specific point in the stack trace.
 
 It’s unbelievably useful for debugging exceptions and is often faster than dropping in print statements into your code base when debugging certain types of errors.
-
-
 

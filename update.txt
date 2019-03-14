@@ -24,50 +24,36 @@ if VERSION < UPDATE_VERSION:
             sql = '''BEGIN TRANSACTION;
             ALTER TABLE app_settings RENAME TO tmp_app_settings;
             CREATE TABLE app_settings (
-            sett VARCHAR NOT NULL,
-            backup_enabled SMALLINT,
-            backup_type SMALLINT,
-            google_drive_id VARCHAR,
-            backup_file_prefix VARCHAR,
-            email_push_enabled SMALLINT,
-            web_push_enabled SMALLINT,
-            dynalist_api_token VARCHAR,
-            dynalist_api_url VARCHAR,
-            dynalist_api_file_id VARCHAR,
-            smtp_host VARCHAR,
-            smtp_port INTEGER,
-            smtp_email VARCHAR,
-            smtp_password VARCHAR,
-            secret_code VARCHAR,
-            app_name VARCHAR,
-            old_file VARCHAR,
-            new_file VARCHAR,
-            backup_dir VARCHAR,
-            PRIMARY KEY (sett)
+                sett VARCHAR NOT NULL,
+                backup_enabled SMALLINT,
+                backup_type SMALLINT,
+                google_drive_id VARCHAR,
+                backup_file_prefix VARCHAR,
+                email_push_enabled SMALLINT,
+                web_push_enabled SMALLINT,
+                dynalist_api_token VARCHAR,
+                dynalist_api_url VARCHAR,
+                dynalist_api_file_id VARCHAR,
+                smtp_host VARCHAR,
+                smtp_port INTEGER,
+                smtp_email VARCHAR,
+                smtp_password VARCHAR,
+                secret_code VARCHAR,
+                app_name VARCHAR,
+                old_file VARCHAR,
+                new_file VARCHAR,
+                backup_dir VARCHAR,
+                PRIMARY KEY (sett)
             );
-            INSERT INTO "app_settings" VALUES(
-            'core',
-            SELECT backup_enabled,
-            backup_type,
-            google_drive_id,
-            backup_file_prefix,
-            email_push_enabled,
-            web_push_enabled,
-            dynalist_api_token,
-            dynalist_api_url,
-            dynalist_api_file_id,
-            smtp_host,
-            smtp_port,
-            smtp_email,
-            smtp_password,
-            secret_code,
-            FROM tmp_app_settings
-            'Dynalist Companion',
-            'path/to/old.txt',
-            'path/to/new.txt',
-            'path/to/backup_directory');
+            INSERT INTO "app_settings" 
+                SELECT 'core', backup_enabled, backup_type, google_drive_id, backup_file_prefix, email_push_enabled,
+                    web_push_enabled, dynalist_api_token, dynalist_api_url, dynalist_api_file_id, smtp_host, smtp_port,
+					smtp_email, smtp_password, secret_code, 'Dynalist Companion', 'path/to/old.txt', 'path/to/new.txt',
+					'path/to/backup_directory'
+			        FROM tmp_app_settings;
             DROP TABLE tmp_app_settings;
             COMMIT;'''
+			
             cur = conn.cursor()
             cur.executescript(sql)
             print('Updated.')
